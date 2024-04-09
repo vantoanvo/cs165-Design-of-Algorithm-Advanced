@@ -1,6 +1,8 @@
 import argparse
 from enum import Enum
 import time
+import math
+import random
 from pathlib import Path
 from insertion_sort import insertion_sort
 from merge_sort import merge_sort
@@ -41,15 +43,44 @@ parser.add_argument('permutation', type=PermutationType, help = "permetation of 
 parser.add_argument('algorithm_name', choices=SORTING_ALGORITHMS.keys(), help="Name of the sorting")
 
 def generate_random_list(size:int, permutation: PermutationType)->list[int]:
-    nums = list(range(size))
+    nums = []
     match permutation:
         case PermutationType.UNIFORMLY_DISTRIBUTED:
-            pass
+            nums = generate_uniformly_distributed_permutation(size)
         case PermutationType.REVERSE_SORTED:
-            nums.reverse()
+            nums = generate_reverse_list(size)
         case PermutationType.ALMOST_SORTED:
-            pass
+            nums = generate_almost_sorted_permutation(size)
     return nums
+
+def generate_uniformly_distributed_permutation(n):
+    permutation = list(range(1, n+1))
+    for i in range(n-1, 0, -1):
+        j = random.randint(0, i)  # Choose a random index j such that 0 ≤ j ≤ i
+        permutation[i], permutation[j] = permutation[j], permutation[i]  # Swap the elements at indices i and j
+    return permutation
+def generate_reverse_list(n):
+    reverse_list = list(range(n, 0, -1))
+    return reverse_list
+def generate_almost_sorted_permutation(n):
+    permutation = list(range(1, n+1))
+    
+    # Choose the number of pairs to swap (2log n)
+    num_pairs = int(2 * math.log(n,2))
+
+    for _ in range(num_pairs):
+        # Generate random indices i and j
+        i = random.randint(0, n-1)
+        j = random.randint(0, n-1)
+        
+        # Ensure i and j are distinct
+        while i == j:
+            j = random.randint(0, n-1)
+        # Swap elements at indices i and j
+        permutation[i], permutation[j] = permutation[j], permutation[i]
+
+    return permutation
+
 def get_data_path(permutation: PermutationType, algorithm_name: str) -> Path:
     directory = DATA_DIRECTORY/algorithm_name
     directory.mkdir(parents=True, exist_ok=True)
@@ -68,6 +99,7 @@ def run_benchmark(size: int, permutation: PermutationType, algorithm_name: str, 
     start_time = time.process_time_ns()
     algorithm(nums)
     end_time = time.process_time_ns()
+    print("after sorting: ", nums)
     return end_time - start_time
 
 if __name__ == "__main__":
@@ -76,4 +108,5 @@ if __name__ == "__main__":
     t = run_benchmark(args.size, args.permutation, args.algorithm_name, args.algorithm)
     get_data_path(args.permutation, args.algorithm_name)
     save_data(args.size, args.permutation, args.algorithm_name, t)
+
    
